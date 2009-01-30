@@ -25,13 +25,20 @@
 # You can contact me at the following email address:
 # philippe.chretien@gmail.com
 
+import os
 import sys
 import poplib
 import smtplib
 import email
 import subprocess
 import time
+import mimetypes
 
+from email import encoders
+from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 if len(sys.argv) < 5:
@@ -50,11 +57,11 @@ if len(sys.argv) == 6:
     period = int(sys.argv[5])
 
 
-def returnResponse(msg, response):
+def returnResponse(msg, reply):
     global smtpServer
     
     # Replace with the SMTP call or other ways of returning the response
-    reply = MIMEText(response)
+    #reply = MIMEText(response)
     reply['Subject'] = "RE:" + msg["Subject"]
     reply['From'] = msg["To"]
     reply['To'] = msg["From"]
@@ -66,23 +73,77 @@ def returnResponse(msg, response):
     server.sendmail(msg["To"], msg["From"], reply.as_string())
     server.quit()
 
-def processMsg(msg):
+def processMsg(inMsg):
     try:
-        # msg._payload[0] is the text/plain content
-        for line in msg._payload[0]._payload.split('\n'):
+        payload = inMsg._payload[0]._payload
+        reply = MIMEMultipart()
+        allAttachments = []
+        allResponses = "FTPOPY reply to the following commands:\n\n%s" % (payload)
+        # inMsg._payload[0] is the text/plain content
+        for line in payload.split('\n'):
             if len(line) > 0:
+                if line.find("get") == 0:
+                    path = line[4:].strip()
+                    if not os.path.isfile(path):
+                        reply.attach(MIMEText("File not found:\n"+path))
+                        continue
+                    
+                    ctype, encoding = mimetypes.guess_type(path)
+                    if ctype is None or encoding is not None:
+                        # No guess could be made, or the file is encoded (compressed), so
+                        # use a generic bag-of-bits type.
+                        ctype = 'application/octet-stream'
+                    maintype, subtype = ctype.split('/', 1)
+                    if maintype == 'text':
+                        fp = open(path)
+                        # Note: we should handle calculating the charset
+                        outMsg = MIMEText(fp.read(), _subtype=subtype)
+                        fp.close()
+                    elif maintype == 'image':
+                        fp = open(path, 'rb')
+                        outMsg = MIMEImage(fp.read(), _subtype=subtype)
+                        fp.close()
+                    elif maintype == 'audio':
+                        fp = open(path, 'rb')
+                        outMsg = MIMEAudio(fp.read(), _subtype=subtype)
+                        fp.close()
+                    else:
+                        fp = open(path, 'rb')
+                        outMsg = MIMEBase(maintype, subtype)
+                        outMsg.set_payload(fp.read())
+                        fp.close()
+                        # Encode the payload using Base64
+                        encoders.encode_base64(outMsg)
+                    # Set the filename parameter
+                    filename = path[path.replace("\\", "/").rfind("/")+1:]
+                    outMsg.add_header('Content-Disposition', 'attachment', filename=filename)
+                    
+                    #reply.attach(outMsg)
+                    allAttachments.append(outMsg)
+                    
+                    continue 
+                    
+                if line.find("put") == 0:
+                    continue 
+                    
                 # Execute the command ...
                 print "->", line
                 command = "cmd.exe /c " + line
                  
                 p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
-                text = p.stdout.read()
+                response = p.stdout.read()
                 p.wait()  
                 
-                returnResponse(msg, text)
+                #reply.attach(MIMEText(response))
+                allResponses = allResponses + "\n\n->" + line + "\n" + response
     except:
         return False
     
+    reply.attach(MIMEText(allResponses))
+    for attachment in allAttachments:
+        reply.attach(attachment)
+        
+    returnResponse(inMsg, reply)
     return True
                    
 while True:
@@ -104,6 +165,6 @@ while True:
             
     M.quit()    
     print "Done."
-    
+
     time.sleep(period)
     
