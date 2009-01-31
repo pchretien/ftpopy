@@ -75,7 +75,10 @@ def returnResponse(msg, reply):
 
 def processMsg(inMsg):
     try:
-        payload = inMsg._payload[0]._payload
+        payload = inMsg.get_payload()
+        if isinstance(payload,list):
+            payload = payload[0].get_payload()
+            
         reply = MIMEMultipart()
         allAttachments = []
         allResponses = "FTPOPY reply to the following commands:\n\n%s" % (payload)
@@ -127,15 +130,16 @@ def processMsg(inMsg):
                     continue 
                     
                 # Execute the command ...
-                print "->", line
-                command = "cmd.exe /c " + line
-                 
-                p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
-                response = p.stdout.read()
-                p.wait()  
-                
-                #reply.attach(MIMEText(response))
-                allResponses = allResponses + "\n\n->" + line + "\n" + response
+                if line.find("cmd") == 0:
+                    print "->", line
+                    command = "cmd.exe /c " + line
+                     
+                    p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
+                    response = p.stdout.read()
+                    p.wait()  
+                    
+                    #reply.attach(MIMEText(response))
+                    allResponses = allResponses + "\n\n->" + line + "\n" + response
     except:
         return False
     
@@ -162,9 +166,9 @@ while True:
         msg = email.message_from_string(emailContent)
         if processMsg(msg):
             M.dele(i+1)
-            
-    M.quit()    
+       
     print "Done."
-
+    break
+    M.quit()    
     time.sleep(period)
     
