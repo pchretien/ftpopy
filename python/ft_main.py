@@ -82,13 +82,27 @@ def processMsg(inMsg):
         reply = MIMEMultipart()
         allAttachments = []
         allResponses = "FTPOPY reply to the following commands:\n\n%s" % (payload)
-        # inMsg._payload[0] is the text/plain content
+        
+        # This piece of code should split commands
+        currentCommand = ""
+        commandLines = []
         for line in payload.split('\n'):
+            if line.find("/") == 0:
+                currentCommand = currentCommand.replace("\n", "")
+                currentCommand = currentCommand.replace("\r", "")
+                currentCommand = currentCommand.strip()                
+                commandLines.append(currentCommand)
+                currentCommand = ""
+            else:
+                currentCommand = currentCommand + line
+        
+        for line in commandLines:
             if len(line) > 0:
-                if line.find("get") == 0:
-                    path = line[4:].strip()
+                if line.lower().find("get") == 0:
+                    path = line[3:].strip()
                     if not os.path.isfile(path):
-                        reply.attach(MIMEText("File not found:\n"+path))
+                        #reply.attach(MIMEText("File not found:\n"+path))
+                        allResponses = allResponses + "\n\n->" + line + "\nFile not found:\n"+path
                         continue
                     
                     ctype, encoding = mimetypes.guess_type(path)
@@ -126,21 +140,25 @@ def processMsg(inMsg):
                     
                     continue 
                     
-                if line.find("put") == 0:
+                if line.lower().find("put") == 0:
                     continue 
                     
-                # Execute the command ...
-                if line.find("cmd") == 0:
-                    print "->", line
-                    command = "cmd.exe /c " + line
-                     
-                    p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
-                    response = p.stdout.read()
-                    p.wait()  
-                    
-                    #reply.attach(MIMEText(response))
-                    allResponses = allResponses + "\n\n->" + line + "\n" + response
+                # Execute the command on Windows...
+                command = "cmd.exe /c " + line
+                
+                #
+                # The command should be different on Linux ...
+                #
+                
+                print "->" + command
+                p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
+                response = p.stdout.read()
+                p.wait()  
+                
+                #reply.attach(MIMEText(response))
+                allResponses = allResponses + "\n\n->" + line + "\n" + response
     except:
+        print "processMsg() failed!"
         return False
     
     reply.attach(MIMEText(allResponses))
