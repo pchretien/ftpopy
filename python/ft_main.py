@@ -40,7 +40,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 if len(sys.argv) < 5:
-    print "usage: ft_main.py pop_server pop_username pop password smtp_server [polling_period]"
+    print "usage: ft_main.py pop_server pop_username pop_password smtp_server [polling_period]"
     
 # POP3 server to receive messages from ...
 popServer = sys.argv[1]
@@ -51,9 +51,8 @@ popPassword = sys.argv[3]
 smtpServer = sys.argv[4]
 
 period = 15 # seconds
-if len(sys.argv) == 6:
+if len(sys.argv) > 5:
     period = int(sys.argv[5])
-
 
 def returnResponse(msg, reply):
     global smtpServer
@@ -141,15 +140,8 @@ def processMsg(inMsg):
                 if line.lower().find("put") == 0:
                     continue 
                     
-                # Execute the command on Windows...
-                command = "cmd.exe /c " + line
-                
-                #
-                # The command should be different on Linux ...
-                #
-                
-                print "->" + command
-                p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) 
+                print "->" + line
+                p = subprocess.Popen(line, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True) 
                 response = p.stdout.read()
                 p.wait()  
                 
