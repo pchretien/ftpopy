@@ -28,16 +28,14 @@ import sys
 import poplib
 import smtplib
 import email
-import subprocess
 import time
-import mimetypes
 
 from email import encoders
-from email.mime.audio import MIMEAudio
-from email.mime.base import MIMEBase
-from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from ft_cmd import ICommand
+from ft_cmd_factory import CommandFactory
 
 if len(sys.argv) < 5:
     print "usage: ft_main.py pop_server pop_username pop_password smtp_server [polling_period]"
@@ -93,62 +91,23 @@ def processMsg(inMsg):
             else:
                 currentCommand = currentCommand + line
         
-        for line in commandLines:
-            if len(line) > 0:
-                if line.lower().find("get") == 0:
-                    path = line[3:].strip()
-                    if not os.path.isfile(path):
-                        #reply.attach(MIMEText("File not found:\n"+path))
-                        allResponses = allResponses + "\n\n->" + line + "\nFile not found:\n"+path
-                        continue
-                    
-                    ctype, encoding = mimetypes.guess_type(path)
-                    if ctype is None or encoding is not None:
-                        # No guess could be made, or the file is encoded (compressed), so
-                        # use a generic bag-of-bits type.
-                        ctype = 'application/octet-stream'
-                    maintype, subtype = ctype.split('/', 1)
-                    if maintype == 'text':
-                        fp = open(path)
-                        # Note: we should handle calculating the charset
-                        outMsg = MIMEText(fp.read(), _subtype=subtype)
-                        fp.close()
-                    elif maintype == 'image':
-                        fp = open(path, 'rb')
-                        outMsg = MIMEImage(fp.read(), _subtype=subtype)
-                        fp.close()
-                    elif maintype == 'audio':
-                        fp = open(path, 'rb')
-                        outMsg = MIMEAudio(fp.read(), _subtype=subtype)
-                        fp.close()
-                    else:
-                        fp = open(path, 'rb')
-                        outMsg = MIMEBase(maintype, subtype)
-                        outMsg.set_payload(fp.read())
-                        fp.close()
-                        # Encode the payload using Base64
-                        encoders.encode_base64(outMsg)
-                    # Set the filename parameter
-                    filename = path[path.replace("\\", "/").rfind("/")+1:]
-                    outMsg.add_header('Content-Disposition', 'attachment', filename=filename)
-                    
-                    #reply.attach(outMsg)
-                    allAttachments.append(outMsg)
-                    
-                    continue 
-                    
-                if line.lower().find("put") == 0:
-                    continue 
-                    
-                print "->" + line
-                p = subprocess.Popen(line, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True) 
-                response = p.stdout.read()
-                p.wait()  
-                
-                #reply.attach(MIMEText(response))
+        for line in commandLines:            
+            if len(line) == 0:
+                continue
+            
+            # The the command objects
+            command = CommandFactory().getCommand(line)
+            command.execute()
+            response = command.response()
+            
+            if isinstance(response, str) or isinstance(response, basestring):      
                 allResponses = allResponses + "\n\n->" + line + "\n" + response
+            else:
+                allAttachments.append(response)
+            
     except:
         print "processMsg() failed!"
+        raise 
         return False
     
     reply.attach(MIMEText(allResponses))
@@ -176,7 +135,6 @@ while True:
             M.dele(i+1)
        
     print "Done."
-    
     M.quit()    
     time.sleep(period)
     

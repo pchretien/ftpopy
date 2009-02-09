@@ -4,6 +4,11 @@
 
 Python files:
 	- python/ft_main.py
+	- python/ft_cmd.py
+	- python/ft_cmd_factory.py
+	- python/ft_cmd_get.py
+	- python/ft_cmd_put.py
+	- python/ft_cmd_shell.py
 	
 Other files:
 	- README.txt 			this file
