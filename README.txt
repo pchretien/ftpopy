@@ -9,6 +9,10 @@ Python files:
 	- python/ft_cmd_get.py
 	- python/ft_cmd_put.py
 	- python/ft_cmd_shell.py
+	- python/ft_cmd_help.py
+	- python/ft_mail.py
+	- python/ft_processor.py
+	- python/ft_users.config
 	
 Other files:
 	- README.txt 			this file

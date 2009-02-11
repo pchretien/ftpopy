@@ -30,5 +30,11 @@ class CommandPut(ICommand):
         ICommand.__init__(self, cmd)
         
     def execute(self):
+        print self._cmd
         self._response = self._cmd + "\nNot implemented yet!\n" + path
+        
+    def getHelp(self):
+        helpMessage = "-- put --\n"
+        helpMessage += "Not yet implemented\n"
+        return helpMessage
         

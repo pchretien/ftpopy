@@ -30,8 +30,22 @@ class CommandShell(ICommand):
     def __init__(self, cmd):
         ICommand.__init__(self, cmd)
         
+    def getHelp(self):
+        oldCmd = self._cmd
+        oldResponse = self._response
+        
+        self._cmd = "help " + self._cmd
+        self.execute()
+        helpMessage = "-- shell commands --\n"
+        helpMessage += self._response
+        
+        self._cmd = oldCmd
+        self._response = oldResponse
+        
+        return helpMessage
+        
     def execute(self):
-        print "->" + self._cmd
+        print "shell execute: " + self._cmd
         p = subprocess.Popen(self._cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True) 
         self._response = p.stdout.read()
         p.wait()  

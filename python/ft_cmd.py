@@ -35,4 +35,7 @@ class ICommand(object):
         
     def response(self):
         return self._response
+    
+    def getHelp(self):
+        None
         

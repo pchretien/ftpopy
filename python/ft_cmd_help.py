@@ -23,8 +23,22 @@
 # You can contact me at the following email address:
 # philippe.chretien@gmail.com
 
-import sys
-from ft_processor import MailProcessor
+from ft_cmd import *
 
-processor = MailProcessor(sys.argv)
-processor.run()
+class CommandHelp(ICommand):
+    __commandObject = None
+    
+    def __init__(self, commandObject):
+        ICommand.__init__(self, "?")
+        self.__commandObject = commandObject 
+        
+    def getHelp(self):
+        helpMessage = "-- ? --\n"
+        helpMessage += "usage: ? {command}\n"
+        return helpMessage
+        
+    def execute(self):
+        print "display help for: " + self.__commandObject._cmd
+        self._response =  self.__commandObject.getHelp()
+        
+        

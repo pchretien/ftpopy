@@ -39,8 +39,15 @@ class CommandGet(ICommand):
     def __init__(self, cmd):
         ICommand.__init__(self, cmd)
         
+    def getHelp(self):
+        helpMessage = "-- get --\n"
+        helpMessage += "usage: get {full path of the file on the remote computer}\n"
+        return helpMessage
+        
     def execute(self):
         path = self._cmd[3:].strip()
+        
+        print "attach file: " + path        
         if not os.path.isfile(path):
             #reply.attach(MIMEText("File not found:\n"+path))
             self._response = self._cmd + "\nFile not found:\n" + path

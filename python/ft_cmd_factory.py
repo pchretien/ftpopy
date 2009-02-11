@@ -26,6 +26,7 @@
 from ft_cmd_get import CommandGet
 from ft_cmd_put import CommandPut
 from ft_cmd_shell import CommandShell
+from ft_cmd_help import CommandHelp
 
 class CommandFactory:
     def getCommand(self, cmd):
@@ -33,6 +34,8 @@ class CommandFactory:
             return CommandGet(cmd)
         elif cmd.lower().strip().find("put") == 0:
             return CommandPut(cmd)
+        elif cmd.lower().strip().find("?") == 0:
+            return CommandHelp( self.getCommand(cmd[1:].strip()))
         else:
             return CommandShell(cmd) 
         
