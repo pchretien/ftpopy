@@ -26,5 +26,9 @@
 import sys
 from ft_processor import MailProcessor
 
+print "\nftpoPY - Version 1.0.0"
+print "http://www.basbrun.com/ftpopy"
+print "(C) Copyright 2008-2009 Philippe Chretien"
+
 processor = MailProcessor(sys.argv)
 processor.run()

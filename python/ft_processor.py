@@ -56,16 +56,13 @@ class MailProcessor:
         self.loadUsers()
         
     def loadUsers(self):
-        print "reading ft_users.config configuration file ..."
+        print "Reading onfigurations ..."
         file = open("./ft_users.config")
         lines = file.read().splitlines()
         for line in lines:
             tokens = line.split('=')
             if len(tokens[0]) > 0:
-                self.__users.append([tokens[0], tokens[1]])
-                
-        print "Done."
-        
+                self.__users.append([tokens[0], tokens[1]])        
         
     def checkPassword(self, email, password):
         for u, p in self.__users:
@@ -145,8 +142,8 @@ class MailProcessor:
             return None
         
         allResponses += "\n\n"
-        allResponses += "Available commands are: ?(help), GET(download a file), PUT(upload a file) and all remote host shell commands\n"
-        allResponses += 'All commands must be separated by the empty line "/"\n'
+        allResponses += "Available commands are: ?(help), GET(download a file), PUT(upload a file) and all commands supported by the remote shell. "
+        allResponses += 'All commands must be separated by an empty line starting with /\n'
         allResponses += "\n"
         allResponses += "Visit the project website at http://www.basbrun.com/?ftpopy\n"
         
