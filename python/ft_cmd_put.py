@@ -23,15 +23,48 @@
 # You can contact me at the following email address:
 # philippe.chretien@gmail.com
 
+import base64
 from ft_cmd import ICommand
 
 class CommandPut(ICommand):
-    def __init__(self, cmd):
+    __message = None
+
+    def __init__(self, cmd, msg):
         ICommand.__init__(self, cmd)
+        self.__message = msg
         
     def execute(self):
         print self._cmd
-        self._response = self._cmd + "\nNot implemented yet!\n" + path
+        tokens = self._cmd.split(" ", 2) #asuming filename with no spaces
+        for part in self.__message.walk():
+            filename = part.get_param("name")
+            if filename is not None:
+                if filename != tokens[1]:
+                    continue
+                
+                print "file " + filename + " found"
+                path = tokens[2].strip()
+                if len(path) == 0:
+                    path = "."
+                if path[-1] != "/" and path[-1] != "\\":
+                    path += "/"
+                    
+                payload = part.get_payload()
+                if part.get_content_type().find("text/") == 0:
+                    file = open(path+filename, "w")
+                    file.write(payload)
+                    file.close()
+                else:
+                    data = base64.decodestring(payload)
+                    file = open(path+filename, "wb")
+                    file.write(data)
+                    file.close()
+                    
+                self._response = "File " + filename + " uploaded successfully"
+                return
+            
+        self._response = "File " + filename + " upload failed"
+                
         
     def getHelp(self):
         helpMessage = "-- put --\n"

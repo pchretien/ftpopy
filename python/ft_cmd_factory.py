@@ -27,15 +27,25 @@ from ft_cmd_get import CommandGet
 from ft_cmd_put import CommandPut
 from ft_cmd_shell import CommandShell
 from ft_cmd_help import CommandHelp
+from ft_cmd_ftpop import CommandFtpop 
 
 class CommandFactory:
-    def getCommand(self, cmd):
+    __processor = None
+    
+    def __init__(self, processor):
+        self.__processor = processor
+    
+    def getCommand(self, cmd, msg):
+        global uniqueProcessor
+            
         if cmd.lower().strip().find("get") == 0:
             return CommandGet(cmd)
         elif cmd.lower().strip().find("put") == 0:
-            return CommandPut(cmd)
+            return CommandPut(cmd, msg)
+        elif cmd.lower().strip().find("ftpop") == 0:
+            return CommandFtpop(cmd, self.__processor)
         elif cmd.lower().strip().find("?") == 0:
-            return CommandHelp( self.getCommand(cmd[1:].strip()))
+            return CommandHelp( self.getCommand(cmd[1:].strip(), msg))
         else:
-            return CommandShell(cmd) 
-        
+            return CommandShell(cmd)
+            
